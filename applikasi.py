@@ -31,7 +31,7 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads/'
 
 # Fungsi untuk melakukan prediksi gambar
 def predict_image(filepath):
-    model = load_model('model/model.h5')
+    model = load_model('model.h5')
     img = load_img(filepath, target_size=(300, 300))
     img_array = img_to_array(img)
     img_array = np.expand_dims(img_array, axis=0) / 255.0
