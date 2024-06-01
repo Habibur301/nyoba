@@ -138,7 +138,7 @@ def dashboard():
     else:
         return redirect(url_for('login_route'))
 
-model = load_model('model/model.h5')
+model = load_model('model.h5')
 class_names = ["Non-Defective", "Defective"]
 
 # Function to preprocess image for model
