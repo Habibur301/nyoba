@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-time Can Defect Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        #video-container {
+            display: inline-block;
+            margin-top: 50px;
+        }
+        #video {
+            width: 640px;
+            height: 480px;
+            border: 2px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Real-time Can Defect Detection</h1>
+    <div id="video-container">
+        <img id="video" src="{{ url_for('video_feed') }}">
+    </div>
+</body>
+</html>
