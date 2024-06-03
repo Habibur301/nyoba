@@ -12,13 +12,6 @@ import pymysql
 app = Flask(__name__)
 app.secret_key = '6LdhAeYpAAAAAKfhQ9GP6zirlMQZuZQCs-W93Z-T'
 
-# Konfigurasi MySQL
-conn = pymysql.connect(host='localhost',
-                       user='root',
-                       password='',
-                       database='flask_app_klasifikasklng',
-                       cursorclass=pymysql.cursors.DictCursor)
-
 # Blueprint untuk klasifikasi
 klasifikasi_bp = Blueprint('klasifikasi', __name__)
 
