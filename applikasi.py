@@ -1,6 +1,5 @@
 from flask import Flask, render_template, Response, session, flash, Blueprint, request, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_mysqldb import MySQL, MySQLdb
 import bcrypt
 import cv2
 import numpy as np
@@ -8,17 +7,17 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
 import os
 import requests
+import pymysql
 
 app = Flask(__name__)
 app.secret_key = '6LdhAeYpAAAAAKfhQ9GP6zirlMQZuZQCs-W93Z-T'
 
 # Konfigurasi MySQL
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'flask_app_klasifikasklng'
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
-mysql = MySQL(app)
+conn = pymysql.connect(host='localhost',
+                       user='root',
+                       password='',
+                       database='flask_app_klasifikasklng',
+                       cursorclass=pymysql.cursors.DictCursor)
 
 # Blueprint untuk klasifikasi
 klasifikasi_bp = Blueprint('klasifikasi', __name__)
@@ -88,10 +87,10 @@ def register():
         result = response.json()
 
         if result['success']:
-            cur = mysql.connection.cursor()
-            cur.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)", (name, email, hash_password))
-            mysql.connection.commit()
-            cur.close()
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)", (name, email, hash_password))
+            conn.commit()
+            cursor.close()
 
             session['name'] = name
             session['email'] = email
@@ -113,10 +112,10 @@ def login_route():
         result = response.json()
 
         if result['success']:
-            curl = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            curl.execute("SELECT * FROM users WHERE email=%s", (email,))
-            user = curl.fetchone()
-            curl.close()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
+            user = cursor.fetchone()
+            cursor.close()
 
             if user and bcrypt.checkpw(password, user['password'].encode('utf-8')):
                 session['name'] = user['name']
