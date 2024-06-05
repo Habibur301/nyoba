@@ -7,9 +7,11 @@ charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
 Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
 flatbuffers==24.3.25
 gast==0.5.4
 google-pasta==0.2.0
+greenlet==3.0.3
 grpcio==1.64.0
 h5py==3.11.0
 idna==3.7
@@ -29,12 +31,14 @@ opencv-python==4.9.0.80
 opt-einsum==3.3.0
 optree==0.11.0
 packaging==24.0
+pillow==10.3.0
 protobuf==4.25.3
 Pygments==2.18.0
 PyMySQL==1.1.1
 requests==2.32.3
 rich==13.7.1
 six==1.16.0
+SQLAlchemy==2.0.30
 tensorboard==2.16.2
 tensorboard-data-server==0.7.2
 tensorflow==2.16.1
