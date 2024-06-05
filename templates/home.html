@@ -96,7 +96,7 @@
                     <a class="nav-link" href="#">About</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('klasifikasi.predict') }}">Classify</a>
+                    <a class="nav-link" href="{{ url_for('predict') }}">Classify</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('video_feed') }}">Real-Time</a>
@@ -110,7 +110,7 @@
         <div class="container">
             <h1 class="display-4">Welcome to Can Classification App</h1>
             <p class="lead">Hello, {{ name }}! Anda bisa untuk mengidentifikasi dan mengklasifikasikan produk kalengan sebagai cacat atau tidak cacat menggunakan teknologi kecerdasan buatan kami.</p>
-            <a class="btn btn-primary btn-lg" href="{{ url_for('klasifikasi.predict') }}" role="button">Classify</a>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('predict') }}" role="button">Classify</a>
             <a class="btn btn-primary btn-lg" href="{{ url_for('video_feed') }}" role="button">Real-Time</a>
         </div>
     </div>
