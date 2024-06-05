@@ -1,27 +1,28 @@
-from flask import Flask, render_template, Response, session, flash, Blueprint, request, redirect, url_for
-from werkzeug.security import generate_password_hash, check_password_hash
-import bcrypt
+from flask import Flask, render_template, Response, session, flash, request, redirect, url_for
 import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
 import os
-import requests
-import pymysql
+import logging
+from keras.utils import load_img, img_to_array
+from keras.models import load_model
+
 
 app = Flask(__name__)
 app.secret_key = '6LdhAeYpAAAAAKfhQ9GP6zirlMQZuZQCs-W93Z-T'
 
-# Blueprint untuk klasifikasi
-klasifikasi_bp = Blueprint('klasifikasi', __name__)
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
 
-# Fungsi untuk memeriksa apakah jenis file yang diunggah diizinkan
+# Function to check if the uploaded file is allowed
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
+
 app.config['UPLOAD_FOLDER'] = 'static/uploads/'
 
-# Fungsi untuk melakukan prediksi gambar
+# Function to predict the image
 def predict_image(filepath):
     model = load_model('model.h5')
     img = load_img(filepath, target_size=(300, 300))
@@ -33,12 +34,11 @@ def predict_image(filepath):
     else:
         return 'Normal'
 
-# Route untuk prediksi
-@klasifikasi_bp.route('/predict', methods=['GET', 'POST'])
+@app.route('/predict', methods=['GET', 'POST'])
 def predict():
     if 'email' not in session:
         flash("Anda harus login untuk mengakses halaman ini.")
-        return redirect(url_for('login_route'))
+        return redirect(url_for('login'))
     else:
         if request.method == 'POST':
             if 'file' not in request.files:
@@ -55,71 +55,52 @@ def predict():
         else:
             return render_template('predict.html')
 
-app.register_blueprint(klasifikasi_bp)
-
 @app.route('/')
 def home():
+    if 'users' not in session:
+        session['users'] = {
+            "admin@example.com": {"username": "admin", "password": "password123"}
+        }
+
     if 'email' in session:
         return redirect(url_for('dashboard'))
-    return redirect(url_for('login_route'))
+    return redirect(url_for('login'))
 
 @app.route('/register', methods=['POST', 'GET'])
 def register():
     if request.method == 'GET':
         return render_template('register.html')
     else:
-        name = request.form['name']
+        username = request.form['name']
         email = request.form['email']
-        password = request.form['password'].encode('utf-8')
-        hash_password = bcrypt.hashpw(password, bcrypt.gensalt()).decode('utf-8')
+        password = request.form['password']
 
-        recaptcha_response = request.form['g-recaptcha-response']
-        recaptcha_secret = '6LdhAeYpAAAAAKfhQ9GP6zirlMQZuZQCs-W93Z-T'
-        data = {'secret': recaptcha_secret, 'response': recaptcha_response}
-        response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
-        result = response.json()
-
-        if result['success']:
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)", (name, email, hash_password))
-            conn.commit()
-            cursor.close()
-
-            session['name'] = name
-            session['email'] = email
-            return redirect(url_for('login_route'))
+        users = session.get('users', {})
+        if email in users:
+            flash("Email sudah terdaftar.")
+            return redirect(url_for('register'))
         else:
-            flash("Verifikasi reCAPTCHA gagal. Silakan coba lagi.")
-            return redirect(url_for('register_route'))
+            users[email] = {"username": username, "password": password}
+            session['users'] = users
+            flash("Registrasi berhasil. Silakan login.")
+            return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
-def login_route():
+def login():
     if request.method == 'POST':
         email = request.form['email']
-        password = request.form['password'].encode('utf-8')
+        password = request.form['password']
 
-        recaptcha_response = request.form['g-recaptcha-response']
-        recaptcha_secret = '6LdhAeYpAAAAAKfhQ9GP6zirlMQZuZQCs-W93Z-T'
-        data = {'secret': recaptcha_secret, 'response': recaptcha_response}
-        response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
-        result = response.json()
+        users = session.get('users', {})
+        user = users.get(email)
 
-        if result['success']:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-            user = cursor.fetchone()
-            cursor.close()
-
-            if user and bcrypt.checkpw(password, user['password'].encode('utf-8')):
-                session['name'] = user['name']
-                session['email'] = user['email']
-                return redirect(url_for('home'))
-            else:
-                flash("Gagal, Email dan Password Tidak Cocok")
-                return redirect(url_for('login_route'))
+        if user and user['password'] == password:
+            session['name'] = user['username']
+            session['email'] = email
+            return redirect(url_for('home'))
         else:
-            flash("Verifikasi reCAPTCHA gagal. Silakan coba lagi.")
-            return redirect(url_for('login_route'))
+            flash("Gagal, Email dan Password Tidak Cocok")
+            return redirect(url_for('login'))
     else:
         return render_template('login.html')
 
@@ -128,7 +109,7 @@ def dashboard():
     if 'email' in session:
         return render_template('home.html', name=session['name'])
     else:
-        return redirect(url_for('login_route'))
+        return redirect(url_for('login'))
 
 model = load_model('model.h5')
 class_names = ["Non-Defective", "Defective"]
@@ -165,14 +146,12 @@ def gen_frames():
             prediction = predict_class(frame_rgb)
             label = f"Prediction: {prediction}"
             
-            # Display the result on the frame
             cv2.putText(frame, label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
             
             ret, buffer = cv2.imencode('.jpg', frame)
             frame = buffer.tobytes()
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-            
 
 if __name__ == '__main__':
     app.run(debug=True)
